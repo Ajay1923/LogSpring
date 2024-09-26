@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Arial", sans-serif;
+            background: linear-gradient(to right, #FFD700, #FF6347);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: #581845;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            position: fixed;
+            top: 0;
+            left: 160px;
+            width: calc(100% - 160px);
+            z-index: 500;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sidebar {
+            margin: 0;
+            padding: 10px;
+            width: 160px;
+            background: linear-gradient(to right, #FFD700, #FF6347);
+            position: fixed;
+            height: 100%;
+            overflow: auto;
+            top: 0;
+            left: 0;
+            z-index: 999;
+        }
+
+        .sidebar h2 {
+            font-size: 18px;
+            margin: 10px 0;
+            color: #ffffff;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #ffffff;
+            padding: 10px;
+            text-decoration: none;
+            font-size: 18px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar a.active,
+        .sidebar a:hover {
+            background-color: #004d40;
+        }
+
+        .content {
+            margin-left: 160px;
+            padding: 80px 20px 20px;
+        }
+
+        .date-filter {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .date-filter label {
+            margin: 0 10px 0 0;
+            color: #333;
+        }
+
+        .date-filter input[type="date"] {
+            margin: 0 10px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .date-filter button {
+            padding: 5px 15px;
+            background-color: #00796b;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .date-filter button:hover {
+            background-color: #004d40;
+        }
+
+        .log-container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .log-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .log-container th, .log-container td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .log-container th {
+            background-color: #00796b;
+            color: white;
+        }
+
+        @media screen and (max-width: 500px) {
+            .header {
+                width: 100%;
+                left: 0;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 50px 5px;
+            }
+
+            .content {
+                margin-left: 0;
+                margin-top: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Statistics</div>
+    
+    <div class="sidebar">
+        <h2><a href="/webpage">File Upload</a></h2>
+        <h2><a href="/statistics" class="active">Statistics</a></h2>
+        <h2><a href="/settings">Settings</a></h2>
+    </div>
+    
+    <div class="content">
+        <div class="date-filter">
+            <label for="from-date">From:</label>
+            <input type="date" id="from-date">
+            <label for="to-date">To:</label>
+            <input type="date" id="to-date">
+            <button id="filter-btn">Filter</button>
+        </div>
+
+        <div class="log-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Uploaded File Name</th>
+                        <th>Resulting File Name</th>
+                        <th>Mail/Downloaded</th>
+                        <th>AccessException</th>
+                        <th>SchedulerException</th>
+                        <th>NullPointerException</th>
+                        <th>SuperCsvException</th>
+                        <th>CloudClientException</th>
+                        <th>InvalidFormatException</th>
+                        
+                    </tr>
+                </thead>
+                <tbody id="log-entries">
+                    <!-- Log entries will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('filter-btn').addEventListener('click', function() {
+            const fromDate = document.getElementById('from-date').value;
+            const toDate = document.getElementById('to-date').value;
+            console.log(`Filtering logs from ${fromDate} to ${toDate}`);
+
+            // Call your API to filter logs based on the selected dates
+            fetch(`/api/statistics?from=${fromDate}&to=${toDate}`)
+                .then(response => response.json())
+                .then(data => populateLogEntries(data))
+                .catch(error => console.error('Error fetching data:', error));
+        });
+
+        function populateLogEntries(logEntries) {
+            const logEntriesContainer = document.getElementById('log-entries');
+            logEntriesContainer.innerHTML = ''; // Clear existing entries
+
+            logEntries.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.timestamp}</td>
+                    <td>${entry.uploadedFileName}</td>
+                    <td>${entry.resultingFileName}</td>
+                    <td>${entry.logCodes}</td>
+                `;
+                logEntriesContainer.appendChild(row);
+            });
+        }
+
+        // Initial fetch to populate logs on page load
+        fetch('/api/statistics')
+            .then(response => response.json())
+            .then(data => populateLogEntries(data))
+            .catch(error => console.error('Error fetching initial data:', error));
+    </script>
+</body>
+</html>
